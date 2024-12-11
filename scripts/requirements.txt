@@ -1,0 +1,6 @@
+pandas
+sqlalchemy
+sqlalchemy_utils
+numpy
+psycopg2
+os

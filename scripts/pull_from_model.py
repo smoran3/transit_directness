@@ -22,17 +22,28 @@
 import pandas as pd
 from sqlalchemy_utils import database_exists, create_database
 import env_vars as ev
-from env_vars import ENGINE, conn
+from env_vars import ENGINE
 import numpy
-import VisumPy.helpers as h
-import psycopg2 as psql
+import sys
 import os
+script_dir = os.path.dirname(os.path.abspath(__file__))  # Get the current script's directory
+visum_dir = os.path.join(script_dir, 'VisumPy')  # Adjust as needed
+sys.path.append(visum_dir)
+
+from VisumPy import helpers as h
+import psycopg2 as psql
+import sqlalchemy
+from sqlalchemy import text
+
 
 
 #create database and enable postgis
 if not database_exists(ENGINE.url):
     create_database(ENGINE.url)
-ENGINE.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
+conn = ENGINE.connect()
+Q = "CREATE EXTENSION IF NOT EXISTS postgis;"
+conn.execute(text(Q))
+
 
 #look for version files in run folder
 runDir = r"D:\dvrpc_shared\NetworkGap_Directness\ModelRun\TIM251_2019_Full_Run"
@@ -127,7 +138,7 @@ del TransferWait
 
 
 # creating a cursor object
-cur = conn.cursor()
+cur = ENGINE.cursor()
 # Create a table if it doesn't exist
 cur.execute("""
     CREATE TABLE IF NOT EXISTS transit_vol_sum (
@@ -141,7 +152,7 @@ for t in TODs:
     cur.execute("INSERT INTO transit_vol_sum (tod, volume) VALUES (%s, %s)", (t, TOD_VolSums[t]))
 
 # Commit the transaction
-conn.commit()
+ENGINE.commit()
 
 #repeat for highway volumes
 cur.execute("""
@@ -154,8 +165,8 @@ cur.execute("""
 for t in TODs:
     cur.execute("INSERT INTO hwy_vol_sum (tod, volume) VALUES (%s, %s)", (t, HWY_TOD_VolSums[t]))
 
-conn.commit()
+ENGINE.commit()
 
 # Close the connection
 cur.close()
-conn.close()
+ENGINE.close()
