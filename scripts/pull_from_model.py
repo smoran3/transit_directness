@@ -47,7 +47,7 @@ conn.execute(text(Q))
 
 #look for version files in run folder
 runDir = r"D:\dvrpc_shared\NetworkGap_Directness\ModelRun\TIM251_2019_Full_Run"
-TODs = ["AM", "MD"]#, "PM", "NT"]
+TODs = ["AM", "MD", "PM", "NT"]
 
 #append TOD to the file path
 paths = []
@@ -76,62 +76,62 @@ for versionFilePath in paths:
     print(TOD)
     
     #get values from OD Pairs listing
-    print("Getting FromZone")
+    print("FromZone")
     FromZone = h.GetMulti(Visum.Net.ODPairs,"FromZoneNo")
-    print("inserting FromZone")
     insert_to_pg(FromZone, 'FromZone', TOD)
-    print("deleting FromZone")
     del FromZone
 
-    
+    print("ToZone")
+    ToZone = h.GetMulti(Visum.Net.ODPairs,"ToZoneNo")
+    insert_to_pg(ToZone, 'ToZone', TOD)
+    del ToZone
+
+    print("NumTransfers")
+    NumTransfers = h.GetMulti(Visum.Net.ODPairs,"MatValue(480 NTR)")
+    insert_to_pg(NumTransfers, 'NumTransfers', TOD)
+    del NumTransfers
+
+    print("JourneyTime")
+    JourneyTime = h.GetMulti(Visum.Net.ODPairs,"MatValue(490 JRT)")
+    insert_to_pg(JourneyTime, 'JourneyTime', TOD)
+    del JourneyTime
+
+    print("JourneyDist")
+    JourneyDist = h.GetMulti(Visum.Net.ODPairs,"MatValue(100033 JRD)")
+    insert_to_pg(JourneyDist, 'JourneyDist', TOD)
+    del JourneyDist
+
+    print("HwyTime")
+    HwyTime = h.GetMulti(Visum.Net.ODPairs,"MatValue(290 TTC)") #tsys specific time interval in loaded network
+    insert_to_pg(HwyTime, 'HwyTime', TOD)
+    del HwyTime
+
+    print("PrTDist")
+    PrTDist = h.GetMulti(Visum.Net.ODPairs,"MatValue(270 DIS)")
+    insert_to_pg(PrTDist, 'PrTDist', TOD)
+    del PrTDist
+
+    print("HwyVol")
+    HwyVol = h.GetMulti(Visum.Net.ODPairs,"MatValue(2000 Highway)")
+    insert_to_pg(HwyVol, 'HwyVol', TOD)
+    del HwyVol
+
+    print("TransitVol")
+    TransitVol = h.GetMulti(Visum.Net.ODPairs,"MatValue(2100 ToTotal)")
+    insert_to_pg(TransitVol, 'TransitVol', TOD)
+    del TransitVol
+
+    print("TransferWait")
+    TransferWait = h.GetMulti(Visum.Net.ODPairs,"MatValue(100032 TWT)")
+    insert_to_pg(TransferWait, 'TransferWait', TOD)
+    del TransferWait
+
+    print("TotalVol")
+    TotalVol = h.GetMulti(Visum.Net.ODPairs,"MatValue(100034 TotalVol_AllModes)")
+    insert_to_pg(TotalVol, 'TotalVol', TOD)
+    del TotalVol
 
 
-
-    # ToZone = h.GetMulti(Visum.Net.ODPairs,"ToZoneNo")
-    # NumTransfers = h.GetMulti(Visum.Net.ODPairs,"MatValue(480 NTR)")
-    # JourneyTime = h.GetMulti(Visum.Net.ODPairs,"MatValue(490 JRT)")
-    # JourneyDist = h.GetMulti(Visum.Net.ODPairs,"MatValue(100033 JRD)")
-    # HwyTime = h.GetMulti(Visum.Net.ODPairs,"MatValue(290 TTC)") #tsys specific time interval in loaded network
-    # PrTDist = h.GetMulti(Visum.Net.ODPairs,"MatValue(270 DIS)")
-    # HwyVol = h.GetMulti(Visum.Net.ODPairs,"MatValue(2000 Highway)")
-    # TransitVol = h.GetMulti(Visum.Net.ODPairs,"MatValue(2100 ToTotal)")
-    # TransferWait = h.GetMulti(Visum.Net.ODPairs,"MatValue(100032 TWT)")
-    # TotalVol = h.GetMulti(Visum.Net.ODPairs,"MatValue(100034 TotalVol_AllModes)")
-    
-    # #add to data frame
-    # df = pd.DataFrame({
-    #     'FromZone':FromZone,
-    #     'ToZone':ToZone,
-    #     'NumTransfers':NumTransfers,
-    #     'JourneyTime': JourneyTime,
-    #     'JourneyDist': JourneyDist,
-    #     'HwyTime':HwyTime,
-    #     'PrTDist':PrTDist,
-    #     'HwyVol':HwyVol,
-    #     'TransitVol':TransitVol,
-    #     'TransferWait':TransferWait,
-    #     'TotalVol':TotalVol
-    # }
-    # )   
-    
-
-    
-    # creating table
-    # sql = '''CREATE TABLE (%s)(
-    # FromZone numeric,
-    # ToZone numeric,
-    # NumTransfers numeric,
-    # JourneyTime numeric,
-    # JourneyDist numeric,
-    # HwyTime numeric,
-    # PrTDist numeric,
-    # HwyVol numeric,
-    # TransitVol numeric,
-    # TransferWait numeric,
-    # TotalVol numeric
-    # )''', TOD
-
-    '''
     
     #calculate total transit volume for time period
     TOD_Volume = h.GetMatrix(Visum, 2200)
@@ -142,16 +142,9 @@ for versionFilePath in paths:
     HWY_TOD_Volume = h.GetMatrix(Visum, 2000)
     HWY_TOD_VolSum = HWY_TOD_Volume.sum()
     HWY_TOD_VolSums[TOD] = HWY_TOD_VolSum
-    '''
-# del NumTransfers
-# del JourneyTime 
-# del JourneyDist
-# del HwyTime 
-# del PrTDist 
-# del HwyVol
-# del TransitVol
-# del TransferWait
-'''
+    
+
+
 
 # creating a cursor object
 cur = ENGINE.cursor()
@@ -186,4 +179,3 @@ ENGINE.commit()
 # Close the connection
 cur.close()
 ENGINE.close()
-'''
