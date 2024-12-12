@@ -64,7 +64,8 @@ HWY_TOD_VolSums = {}
 
 def insert_to_pg(list,name,tod):
     df = pd.DataFrame(list)
-    df.to_sql((name,'_',tod), ENGINE, chunksize = 10000)
+    n = name+'_'+tod
+    df.to_sql(n, ENGINE, chunksize = 10000)
 
 
 Visum = h.CreateVisum(23)
