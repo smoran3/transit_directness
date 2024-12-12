@@ -47,7 +47,7 @@ conn.execute(text(Q))
 
 #look for version files in run folder
 runDir = r"D:\dvrpc_shared\NetworkGap_Directness\ModelRun\TIM251_2019_Full_Run"
-TODs = ["AM", "MD", "PM", "NT"]
+TODs = ["AM", "MD"]#, "PM", "NT"]
 
 #append TOD to the file path
 paths = []
@@ -62,6 +62,11 @@ print("pull data from model")
 TOD_VolSums = {}
 HWY_TOD_VolSums = {}
 
+def insert_to_pg(list_name, tod):
+    df = pd.DataFrame(list_name)
+    df.to_sql(('list_name_',tod), ENGINE, chunksize = 10000)
+
+
 Visum = h.CreateVisum(23)
 #open version files to gather data
 for versionFilePath in paths:
@@ -70,32 +75,38 @@ for versionFilePath in paths:
     
     #get values from OD Pairs listing
     FromZone = h.GetMulti(Visum.Net.ODPairs,"FromZoneNo")
-    ToZone = h.GetMulti(Visum.Net.ODPairs,"ToZoneNo")
-    NumTransfers = h.GetMulti(Visum.Net.ODPairs,"MatValue(480 NTR)")
-    JourneyTime = h.GetMulti(Visum.Net.ODPairs,"MatValue(490 JRT)")
-    JourneyDist = h.GetMulti(Visum.Net.ODPairs,"MatValue(100033 JRD)")
-    HwyTime = h.GetMulti(Visum.Net.ODPairs,"MatValue(290 TTC)") #tsys specific time interval in loaded network
-    PrTDist = h.GetMulti(Visum.Net.ODPairs,"MatValue(270 DIS)")
-    HwyVol = h.GetMulti(Visum.Net.ODPairs,"MatValue(2000 Highway)")
-    TransitVol = h.GetMulti(Visum.Net.ODPairs,"MatValue(2100 ToTotal)")
-    TransferWait = h.GetMulti(Visum.Net.ODPairs,"MatValue(100032 TWT)")
-    TotalVol = h.GetMulti(Visum.Net.ODPairs,"MatValue(100034 TotalVol_AllModes)")
+    insert_to_pg(FromZone, TOD)
+    del FromZone
     
-    #add to data frame
-    df = pd.DataFrame({
-        'FromZone':FromZone,
-        'ToZone':ToZone,
-        'NumTransfers':NumTransfers,
-        'JourneyTime': JourneyTime,
-        'JourneyDist': JourneyDist,
-        'HwyTime':HwyTime,
-        'PrTDist':PrTDist,
-        'HwyVol':HwyVol,
-        'TransitVol':TransitVol,
-        'TransferWait':TransferWait,
-        'TotalVol':TotalVol
-    }
-    )   
+
+
+
+    # ToZone = h.GetMulti(Visum.Net.ODPairs,"ToZoneNo")
+    # NumTransfers = h.GetMulti(Visum.Net.ODPairs,"MatValue(480 NTR)")
+    # JourneyTime = h.GetMulti(Visum.Net.ODPairs,"MatValue(490 JRT)")
+    # JourneyDist = h.GetMulti(Visum.Net.ODPairs,"MatValue(100033 JRD)")
+    # HwyTime = h.GetMulti(Visum.Net.ODPairs,"MatValue(290 TTC)") #tsys specific time interval in loaded network
+    # PrTDist = h.GetMulti(Visum.Net.ODPairs,"MatValue(270 DIS)")
+    # HwyVol = h.GetMulti(Visum.Net.ODPairs,"MatValue(2000 Highway)")
+    # TransitVol = h.GetMulti(Visum.Net.ODPairs,"MatValue(2100 ToTotal)")
+    # TransferWait = h.GetMulti(Visum.Net.ODPairs,"MatValue(100032 TWT)")
+    # TotalVol = h.GetMulti(Visum.Net.ODPairs,"MatValue(100034 TotalVol_AllModes)")
+    
+    # #add to data frame
+    # df = pd.DataFrame({
+    #     'FromZone':FromZone,
+    #     'ToZone':ToZone,
+    #     'NumTransfers':NumTransfers,
+    #     'JourneyTime': JourneyTime,
+    #     'JourneyDist': JourneyDist,
+    #     'HwyTime':HwyTime,
+    #     'PrTDist':PrTDist,
+    #     'HwyVol':HwyVol,
+    #     'TransitVol':TransitVol,
+    #     'TransferWait':TransferWait,
+    #     'TotalVol':TotalVol
+    # }
+    # )   
     
 
     
@@ -113,9 +124,8 @@ for versionFilePath in paths:
     # TransferWait numeric,
     # TotalVol numeric
     # )''', TOD
-    
-    #create Connection Score table in postgres
-    df.to_sql(('(%s)',TOD), ENGINE, chunksize = 10000)
+
+    '''
     
     #calculate total transit volume for time period
     TOD_Volume = h.GetMatrix(Visum, 2200)
@@ -126,16 +136,16 @@ for versionFilePath in paths:
     HWY_TOD_Volume = h.GetMatrix(Visum, 2000)
     HWY_TOD_VolSum = HWY_TOD_Volume.sum()
     HWY_TOD_VolSums[TOD] = HWY_TOD_VolSum
-    
-del NumTransfers
-del JourneyTime 
-del JourneyDist
-del HwyTime 
-del PrTDist 
-del HwyVol
-del TransitVol
-del TransferWait
-
+    '''
+# del NumTransfers
+# del JourneyTime 
+# del JourneyDist
+# del HwyTime 
+# del PrTDist 
+# del HwyVol
+# del TransitVol
+# del TransferWait
+'''
 
 # creating a cursor object
 cur = ENGINE.cursor()
@@ -170,3 +180,4 @@ ENGINE.commit()
 # Close the connection
 cur.close()
 ENGINE.close()
+'''
