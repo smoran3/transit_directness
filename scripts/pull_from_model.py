@@ -62,9 +62,9 @@ print("pull data from model")
 TOD_VolSums = {}
 HWY_TOD_VolSums = {}
 
-def insert_to_pg(list_name, tod):
-    df = pd.DataFrame(list_name)
-    df.to_sql(('list_name_',tod), ENGINE, chunksize = 10000)
+def insert_to_pg(list,name,tod):
+    df = pd.DataFrame(list)
+    df.to_sql((name,'_',tod), ENGINE, chunksize = 10000)
 
 
 Visum = h.CreateVisum(23)
@@ -72,11 +72,16 @@ Visum = h.CreateVisum(23)
 for versionFilePath in paths:
     Visum.LoadVersion(versionFilePath)
     TOD = Visum.Net.AttValue("TOD")
+    print(TOD)
     
     #get values from OD Pairs listing
+    print("Getting FromZone")
     FromZone = h.GetMulti(Visum.Net.ODPairs,"FromZoneNo")
-    insert_to_pg(FromZone, TOD)
+    print("inserting FromZone")
+    insert_to_pg(FromZone, 'FromZone', TOD)
+    print("deleting FromZone")
     del FromZone
+
     
 
 
