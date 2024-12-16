@@ -23,7 +23,7 @@ import pandas as pd
 from sqlalchemy_utils import database_exists, create_database
 import env_vars as ev
 from env_vars import ENGINE
-import numpy
+import numpy as np
 import sys
 import os
 script_dir = os.path.dirname(os.path.abspath(__file__))  # Get the current script's directory
@@ -47,7 +47,7 @@ conn.execute(text(Q))
 
 #look for version files in run folder
 runDir = r"D:\MODELING\transit_directness\ModelRun\TIM251_2019_Full_Run"
-TODs = ["AM", "MD", "PM", "NT"]
+TODs = ["MD", "PM", "NT"] #"AM", 
 
 #append TOD to the file path
 paths = []
@@ -59,8 +59,8 @@ for root, dirs, files in os.walk(runDir):
 print("pull data from model")
 
 #create dictionaries to hold data
-TOD_VolSums = {}
-HWY_TOD_VolSums = {}
+#TOD_VolSums = {}
+#HWY_TOD_VolSums = {}
 
 def insert_to_pg(list,name,tod):
     df = pd.DataFrame(list)
@@ -131,51 +131,23 @@ for versionFilePath in paths:
     insert_to_pg(TotalVol, 'TotalVol', TOD)
     del TotalVol
 
-
     
     #calculate total transit volume for time period
-    TOD_Volume = h.GetMatrix(Visum, 2200)
+    print("Calculate total transit volume")
+    TOD_Volume = h.GetMatrix(Visum, 2100)
     TOD_VolSum = TOD_Volume.sum()
-    TOD_VolSums[TOD] = TOD_VolSum
+    to_insert = [(TOD, int(TOD_VolSum))]
+    data = pd.DataFrame(to_insert)
+    data.to_sql('transit_vol_sum', con=ENGINE, if_exists = 'append', index = False)
+    #TOD_VolSums[TOD] = TOD_VolSum
     
     #calculate total highway volume for time period
+    print("Calculate total highway volume")
     HWY_TOD_Volume = h.GetMatrix(Visum, 2000)
     HWY_TOD_VolSum = HWY_TOD_Volume.sum()
-    HWY_TOD_VolSums[TOD] = HWY_TOD_VolSum
+    to_insert = [(TOD, int(HWY_TOD_VolSum))]
+    data = pd.DataFrame(to_insert)
+    data.to_sql('hwy_vol_sum', con=ENGINE, if_exists = 'append', index = False)
+    #HWY_TOD_VolSums[TOD] = HWY_TOD_VolSum
     
 
-
-
-# creating a cursor object
-cur = ENGINE.cursor()
-# Create a table if it doesn't exist
-cur.execute("""
-    CREATE TABLE IF NOT EXISTS transit_vol_sum (
-        tod TEXT,
-        volume numeric
-    )
-""")
-
-# Insert the dictionary into the table
-for t in TODs:
-    cur.execute("INSERT INTO transit_vol_sum (tod, volume) VALUES (%s, %s)", (t, TOD_VolSums[t]))
-
-# Commit the transaction
-ENGINE.commit()
-
-#repeat for highway volumes
-cur.execute("""
-    CREATE TABLE IF NOT EXISTS hwy_vol_sum (
-        tod TEXT,
-        volume numeric
-    )
-""")
-
-for t in TODs:
-    cur.execute("INSERT INTO hwy_vol_sum (tod, volume) VALUES (%s, %s)", (t, HWY_TOD_VolSums[t]))
-
-ENGINE.commit()
-
-# Close the connection
-cur.close()
-ENGINE.close()

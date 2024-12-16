@@ -33,6 +33,7 @@ conn = ENGINE.connect()
 q = "Select * from (%s);", TOD_tablename
 fetch = conn.execute(text(Q))
 # insert into dictionary
+
 #add to dictionary
 Transfers[TOD] = NumTransfers
 Journeys[TOD] = JourneyDist

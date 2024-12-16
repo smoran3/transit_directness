@@ -3,6 +3,7 @@
 Calculating connection score as a measure of transit directness for LRP analysis.
 
 ### Environment Setup
+Copy `VisumPy` folder and contents from model folder to scripts folder
 
 To create the virtual python environment, run the next few lines in the VS code teminal (powershell):
 (run from the directory where the requirements.txt file lives)
@@ -27,5 +28,5 @@ To run any of the scripts in this repo, activate the virtual environment, change
 ve\scripts\Activate.ps1
 d:
 cd D:/MODELING/transit_directness
-python /scripts/{script_name}.py
+python D:\MODELING\transit_directness\transit_directness\scripts\{script_name}.py
 ```
