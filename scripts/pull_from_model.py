@@ -46,7 +46,7 @@ conn.execute(text(Q))
 
 
 #look for version files in run folder
-runDir = r"D:\dvrpc_shared\NetworkGap_Directness\ModelRun\TIM251_2019_Full_Run"
+runDir = r"D:\MODELING\transit_directness\ModelRun\TIM251_2019_Full_Run"
 TODs = ["AM", "MD", "PM", "NT"]
 
 #append TOD to the file path
