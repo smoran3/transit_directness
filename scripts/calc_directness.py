@@ -29,43 +29,47 @@ TODs = ["AM", "MD", "PM", "NT"]
 # connect to DB
 conn = ENGINE.connect()
 
-#pull fromzone and tozone into lists to reference
-print('pull from zone numbers')
-FromZone = conn.execute('Select "0" From "FromZone_AM";')
-ToZone = conn.execute('Select "0" From "ToZone_AM";')
 
-print(len(FromZone))
-print(len(ToZone))
+#pull fromzone and tozone into lists to reference
+# print('pull from zone numbers')
+# FromZone = list(conn.execute(text('Select "0" From "FromZone_AM";')))
+# ToZone = list(conn.execute(text('Select "0" From "ToZone_AM";')))
+
+# print(FromZone[0])
+# print(ToZone[0])
 
 #pull matrix values into dictionaries
 def db_to_dictionary(TOD, tablename, dictname):
     table = tablename+'_'+TOD
-    q = 'Select "0" from (%s);', table
-    fetch = conn.execute(text(q))
-    dictname[TOD] = fetch
+    print(table)
+    q = ('Select "0" from (%s);', table)
+    l = conn.execute(text(q))
+    print(l)
+    #print(fetch[0])
+    #dictname[TOD] = fetch
 
 for tod in TODs:
     print('Sending data to dictionary: ', tod)
     db_to_dictionary(tod, "NumTransfers", "Transfers")
-    db_to_dictionary(tod, "JourneyDist", "Journeys")
-    db_to_dictionary(tod, "JourneyTime", "JourTime")
-    db_to_dictionary(tod, "PrTDist", "CarDist")
-    db_to_dictionary(tod, "HwyTime", "CarTime")
-    db_to_dictionary(tod, "HwyVol", "PrTvol")
-    db_to_dictionary(tod, "TransitVol", "PuTvol")
-    db_to_dictionary(tod, "TransferWait", "TrWait")
+    # db_to_dictionary(tod, "JourneyDist", "Journeys")
+    # db_to_dictionary(tod, "JourneyTime", "JourTime")
+    # db_to_dictionary(tod, "PrTDist", "CarDist")
+    # db_to_dictionary(tod, "HwyTime", "CarTime")
+    # db_to_dictionary(tod, "HwyVol", "PrTvol")
+    # db_to_dictionary(tod, "TransitVol", "PuTvol")
+    # db_to_dictionary(tod, "TransferWait", "TrWait")
 
-def volsum_to_dict(table, dict):
-    q = 'Select "0", "1" from (%s);', table
-    result = conn.execute(text(q))
-    for i in len(result):
-        dict[(result[i][0])] = result[i][1]
+# def volsum_to_dict(table, dict):
+#     q = 'Select "0", "1" from (%s);', table
+#     result = conn.execute(text(q))
+#     for i in len(result):
+#         dict[(result[i][0])] = result[i][1]
 
-print('Sending volume sums to dictionary')
-volsum_to_dict("transit_vol_sum", TOD_VolSums)
-volsum_to_dict("hwy_vol_sum", HWY_TOD_VolSums)
+# print('Sending volume sums to dictionary')
+# volsum_to_dict("transit_vol_sum", TOD_VolSums)
+# volsum_to_dict("hwy_vol_sum", HWY_TOD_VolSums)
 
-print('test complete')
+# print('test complete')
 
 
 '''
