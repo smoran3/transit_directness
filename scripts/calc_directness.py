@@ -20,6 +20,7 @@ CarTime = {}
 PrTvol = {}
 PuTvol = {}
 TrWait = {}
+
 TOD_VolSums = {}
 HWY_TOD_VolSums = {}
 
@@ -28,11 +29,46 @@ TODs = ["AM", "MD", "PM", "NT"]
 # connect to DB
 conn = ENGINE.connect()
 
+#pull fromzone and tozone into lists to reference
+print('pull from zone numbers')
+FromZone = conn.execute('Select "0" From "FromZone_AM";')
+ToZone = conn.execute('Select "0" From "ToZone_AM";')
 
-# query database
-q = "Select * from (%s);", TOD_tablename
-fetch = conn.execute(text(Q))
-# insert into dictionary
+print(len(FromZone))
+print(len(ToZone))
+
+#pull matrix values into dictionaries
+def db_to_dictionary(TOD, tablename, dictname):
+    table = tablename+'_'+TOD
+    q = 'Select "0" from (%s);', table
+    fetch = conn.execute(text(q))
+    dictname[TOD] = fetch
+
+for tod in TODs:
+    print('Sending data to dictionary: ', tod)
+    db_to_dictionary(tod, "NumTransfers", "Transfers")
+    db_to_dictionary(tod, "JourneyDist", "Journeys")
+    db_to_dictionary(tod, "JourneyTime", "JourTime")
+    db_to_dictionary(tod, "PrTDist", "CarDist")
+    db_to_dictionary(tod, "HwyTime", "CarTime")
+    db_to_dictionary(tod, "HwyVol", "PrTvol")
+    db_to_dictionary(tod, "TransitVol", "PuTvol")
+    db_to_dictionary(tod, "TransferWait", "TrWait")
+
+def volsum_to_dict(table, dict):
+    q = 'Select "0", "1" from (%s);', table
+    result = conn.execute(text(q))
+    for i in len(result):
+        dict[(result[i][0])] = result[i][1]
+
+print('Sending volume sums to dictionary')
+volsum_to_dict("transit_vol_sum", TOD_VolSums)
+volsum_to_dict("hwy_vol_sum", HWY_TOD_VolSums)
+
+print('test complete')
+
+
+'''
 
 #add to dictionary
 Transfers[TOD] = NumTransfers
@@ -423,3 +459,5 @@ print "importing connection score table"
 #create Connection Score table in postgres
 engine = create_engine('postgresql://postgres:sergt@localhost:5432/rtsp')
 SubRegionDF.to_sql('ConnectionScore', engine, chunksize = 10000)
+
+'''
