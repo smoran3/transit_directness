@@ -15,6 +15,8 @@ To create the virtual python environment, run the next few lines in the VS code 
 `pip install psycopg2`
 `pip install pathlib`
 `pip install pywin32`
+`pip install jupyter notebook`
+`pip install ipykernel -U --force-reinstall`
 
 ### Troubleshooting
 If pip installing displays fatal error, try:
