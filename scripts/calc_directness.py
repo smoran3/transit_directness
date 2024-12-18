@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy_utils import database_exists, create_database
 import env_vars as ev
-from env_vars import ENGINE
+from env_vars import ENGINE, conn
 import numpy
 import sys
 import os
@@ -26,66 +26,51 @@ HWY_TOD_VolSums = {}
 
 TODs = ["AM", "MD", "PM", "NT"]
 
-# connect to DB
-conn = ENGINE.connect()
+# connect to DB (sqlalchemy)
+con = ENGINE.connect()
 
 
 #pull fromzone and tozone into lists to reference
-# print('pull from zone numbers')
-# FromZone = list(conn.execute(text('Select "0" From "FromZone_AM";')))
-# ToZone = list(conn.execute(text('Select "0" From "ToZone_AM";')))
+print('pull from zone numbers')
+FromZone = list(con.execute(text('Select "0" From "FromZone_AM";')))
+ToZone = list(con.execute(text('Select "0" From "ToZone_AM";')))
 
-# print(FromZone[0])
-# print(ToZone[0])
+cur = conn.cursor()
 
 #pull matrix values into dictionaries
 def db_to_dictionary(TOD, tablename, dictname):
     table = tablename+'_'+TOD
     print(table)
-    q = ('Select "0" from (%s);', table)
-    l = conn.execute(text(q))
-    print(l)
-    #print(fetch[0])
-    #dictname[TOD] = fetch
+    q = f'Select "0" from "{table}";'
+    cur.execute(q)
+    rows = cur.fetchall()
+    dictname[TOD] = rows
+
 
 for tod in TODs:
-    print('Sending data to dictionary: ', tod)
-    db_to_dictionary(tod, "NumTransfers", "Transfers")
-    # db_to_dictionary(tod, "JourneyDist", "Journeys")
-    # db_to_dictionary(tod, "JourneyTime", "JourTime")
-    # db_to_dictionary(tod, "PrTDist", "CarDist")
-    # db_to_dictionary(tod, "HwyTime", "CarTime")
-    # db_to_dictionary(tod, "HwyVol", "PrTvol")
-    # db_to_dictionary(tod, "TransitVol", "PuTvol")
-    # db_to_dictionary(tod, "TransferWait", "TrWait")
+    db_to_dictionary(tod, "NumTransfers", Transfers)
+    db_to_dictionary(tod, "JourneyDist", Journeys)
+    db_to_dictionary(tod, "JourneyTime", JourTime)
+    db_to_dictionary(tod, "PrTDist", CarDist)
+    db_to_dictionary(tod, "HwyTime", CarTime)
+    db_to_dictionary(tod, "HwyVol", PrTvol)
+    db_to_dictionary(tod, "TransitVol", PuTvol)
+    db_to_dictionary(tod, "TransferWait", TrWait)
 
-# def volsum_to_dict(table, dict):
-#     q = 'Select "0", "1" from (%s);', table
-#     result = conn.execute(text(q))
-#     for i in len(result):
-#         dict[(result[i][0])] = result[i][1]
+def volsum_to_dict(table, vols):
+    q = f'Select "0", "1" from {table};'
+    cur.execute(q)
+    result = cur.fetchall()
+    vols.update(dict(result))
 
-# print('Sending volume sums to dictionary')
-# volsum_to_dict("transit_vol_sum", TOD_VolSums)
-# volsum_to_dict("hwy_vol_sum", HWY_TOD_VolSums)
+print('Sending volume sums to dictionary')
+volsum_to_dict("transit_vol_sum", TOD_VolSums)
+print(TOD_VolSums)
+volsum_to_dict("hwy_vol_sum", HWY_TOD_VolSums)
+print(HWY_TOD_VolSums)
 
-# print('test complete')
 
 
-'''
-
-#add to dictionary
-Transfers[TOD] = NumTransfers
-Journeys[TOD] = JourneyDist
-JourTime[TOD] = JourneyTime
-CarDist[TOD] = PrTDist
-CarTime[TOD] = HwyTime
-PrTvol[TOD] = HwyVol
-PuTvol[TOD] = TransitVol
-TrWait[TOD] = TransferWait
-
-# figure out how to deal with total volume tables once you see how they are formatted
-# in case it is DF to dictionary, see this reference: https://stackoverflow.com/questions/26716616/convert-a-pandas-dataframe-to-a-dictionary
 
 #calculate sum of transit volume
 TotTransitVol = 0
@@ -93,7 +78,7 @@ TotTransitVol = 0
 print("calculating total transit volume")
 
 for TOD in TOD_VolSums:
-    print TOD, TOD_VolSums[TOD]
+    print(TOD, TOD_VolSums[TOD])
     TotTransitVol += TOD_VolSums[TOD]
 #print to test
 print(TotTransitVol)
@@ -104,12 +89,12 @@ TotHwyVol = 0
 print("calculating total highway volume")
 
 for TOD in HWY_TOD_VolSums:
-    print TOD, HWY_TOD_VolSums[TOD]
+    print(TOD, HWY_TOD_VolSums[TOD])
     TotHwyVol += HWY_TOD_VolSums[TOD]
 #print to test
 print(TotHwyVol)
 
-print "calculate TOD weighted averages"
+print("calculate TOD weighted averages")
 
 #calculate average and volume weighted averages for Number of Transfers
 #create lists to hold counts, sums, and the average
@@ -119,8 +104,8 @@ NTR_w_avg = []
 NTR_volsum = []
 
 #iterate through all the items in each list of TOD NTR
-print "step one"
-for i in xrange(0, len(Transfers["AM"])):
+print("step one")
+for i in range(0, len(Transfers["AM"])):
     count = 0.0
     w_sum = 0.0
     volsum = 0.0
@@ -137,8 +122,8 @@ for i in xrange(0, len(Transfers["AM"])):
     NTR_volsum.append(volsum)
 
         
-print "step two"
-for i in xrange(0, len(NTR_counts)):
+print ("step two")
+for i in range(0, len(NTR_counts)):
     if NTR_counts[i] == 0:
         NTR_w_avg.append(-1)
     else:
@@ -155,7 +140,7 @@ JRD_w_avg = []
 JRD_volsum = []
 
 #iterate through all the items in each list of TOD JRD
-for i in xrange(0, len(Journeys["AM"])):
+for i in range(0, len(Journeys["AM"])):
     count = 0.0
     w_sum = 0.0  
     volsum = 0.0
@@ -171,7 +156,7 @@ for i in xrange(0, len(Journeys["AM"])):
     JRD_w_sums.append(w_sum)
     JRD_volsum.append(volsum)
     
-for i in xrange(0, len(JRD_counts)):
+for i in range(0, len(JRD_counts)):
     if JRD_counts[i] == 0:
         JRD_w_avg.append(0)
     else:
@@ -188,7 +173,7 @@ JRT_w_avg = []
 JRT_volsum = []
 
 #iterate through all the items in each list of TOD JRT
-for i in xrange(0, len(JourTime["AM"])):
+for i in range(0, len(JourTime["AM"])):
     count = 0.0
     w_sum = 0.0  
     volsum = 0.0
@@ -204,7 +189,7 @@ for i in xrange(0, len(JourTime["AM"])):
     JRT_w_sums.append(w_sum)
     JRT_volsum.append(volsum)
     
-for i in xrange(0, len(JRT_counts)):
+for i in range(0, len(JRT_counts)):
     if JRT_counts[i] == 0:
         JRT_w_avg.append(0)
     else:
@@ -221,7 +206,7 @@ HWY_w_avg = []
 HWY_volsum = []
 
 #iterate through all the items in each list of TOD JRD
-for i in xrange(0, len(CarDist["AM"])):
+for i in range(0, len(CarDist["AM"])):
     count = 0.0
     w_sum = 0.0
     volsum = 0.0
@@ -234,7 +219,7 @@ for i in xrange(0, len(CarDist["AM"])):
     HWY_w_sums.append(w_sum)
     HWY_volsum.append(volsum)
     
-for i in xrange(0, len(HWY_counts)):
+for i in range(0, len(HWY_counts)):
     HWY_w_avg.append(HWY_w_sums[i]/HWY_volsum[i])
     
 del HWY_counts
@@ -248,7 +233,7 @@ HwyT_w_avg = []
 HwyT_volsum = []
 
 #iterate through all the items in each list of TOD JRD
-for i in xrange(0, len(CarTime["AM"])):
+for i in range(0, len(CarTime["AM"])):
     count = 0.0
     w_sum = 0.0
     volsum = 0.0
@@ -261,7 +246,7 @@ for i in xrange(0, len(CarTime["AM"])):
     HwyT_w_sums.append(w_sum)
     HwyT_volsum.append(volsum)
     
-for i in xrange(0, len(HwyT_counts)):
+for i in range(0, len(HwyT_counts)):
     HwyT_w_avg.append(HwyT_w_sums[i]/HwyT_volsum[i])
     
 del HwyT_counts
@@ -275,7 +260,7 @@ TWT_w_avg = []
 TWT_volsum = []
 
 #iterate through all the items in each list of TOD JRD
-for i in xrange(0, len(TrWait["AM"])):
+for i in range(0, len(TrWait["AM"])):
     count = 0.0
     w_sum = 0.0
     volsum = 0.0
@@ -289,7 +274,7 @@ for i in xrange(0, len(TrWait["AM"])):
     TWT_w_sums.append(w_sum)
     TWT_volsum.append(volsum)
     
-for i in xrange(0, len(TWT_counts)):
+for i in range(0, len(TWT_counts)):
     if TWT_counts[i] == 0:
         # leave open possiblity of 0 wait time; filter out later
         TWT_w_avg.append(-1)
@@ -307,25 +292,25 @@ NTR_copy = list(NTR_w_avg)
            
 origneg = 0
 changed = 0
-for i in xrange(0, len(NTR_copy)):
+for i in range(0, len(NTR_copy)):
     if NTR_copy[i] == -1:
         origneg += 1
         if JRD_w_avg[i] > 0:
             changed += 1
             NTR_copy[i] = 4
             
-print origneg
-print changed
+print (origneg)
+print (changed)
 
 #then, in change 'valid connection' criteria later in dataframe
 
 
-print "transfer and directness criteria"
+print ("transfer and directness criteria")
 
 #flag OD pairs with 1 or more transfer required
-print "Transfer Flag"
+print ("Transfer Flag")
 TransferFlag = []
-for i in xrange(0, len(NTR_copy)):
+for i in range(0, len(NTR_copy)):
     #is a transfer required?
     if NTR_copy[i] >= 1:
         #yes = 1
@@ -335,27 +320,27 @@ for i in xrange(0, len(NTR_copy)):
         TransferFlag.append(0)
         
 #flag OD pairs where transit distance is greater than highway distance
-print "Distance Flag"
+print ("Distance Flag")
 DistanceFlag = []
-for i in xrange(0, len(JRD_w_avg)):
+for i in range(0, len(JRD_w_avg)):
     if JRD_w_avg[i] > HWY_w_avg[i]:
         DistanceFlag.append(1) #yes
     else:
         DistanceFlag.append(0) #no
         
 #flag OD pairs where transit time is greater than highway time
-print "Time Flag"
+print ("Time Flag")
 TimeFlag = []
-for i in xrange(0, len(JRT_w_avg)):
+for i in range(0, len(JRT_w_avg)):
     if JRT_w_avg[i] > HwyT_w_avg[i]:
         TimeFlag.append(1) #yes
     else:
         TimeFlag.append(0) #no
         
 #criteria for points for number of transfers
-print "Transfer Point"
+print ("Transfer Point")
 TransferPoint = []
-for i in xrange(0, len(NTR_copy)):
+for i in range(0, len(NTR_copy)):
     #how many transfers?
     if NTR_copy[i] <= 1:
         #1 or fewer = 0
@@ -365,17 +350,17 @@ for i in xrange(0, len(NTR_copy)):
         TransferPoint.append(1)
         
 #check
-print len(DistanceFlag)
-print len(TimeFlag)
-print TransferPoint[200]
-print TransferPoint[300]
+print (len(DistanceFlag))
+print (len(TimeFlag))
+print (TransferPoint[200])
+print (TransferPoint[300])
 
 #criteria for TWT point
 #updated 5/7/19 based on SEPTA feedback re: transfer penaltys
-print "TWT Point"
+print ("TWT Point")
 TWTPoint = []
 #what is schedule transfer wait time?
-for i in xrange(0, len(TWT_w_avg)):
+for i in range(0, len(TWT_w_avg)):
     #if one transfer and wait time is equal to or over 10 minutes, 1 point
     if (NTR_copy[i] >= 1 and NTR_copy[i] < 2 and TWT_w_avg[i] >= 10):
         TWTPoint.append(1)
@@ -394,11 +379,11 @@ for i in xrange(0, len(TWT_w_avg)):
         
 #sum points for connection score
 ConnectionScore = []
-for i in xrange(0, len(FromZone)):
+for i in range(0, len(FromZone)):
     x = DistanceFlag[i] + TimeFlag[i] + TransferPoint[i] + TWTPoint[i]
     ConnectionScore.append(x)
     
-print "creating data frame" 
+print ("creating data frame") 
     
 #create dataframe from these lists
 df = pd.DataFrame(
@@ -433,7 +418,7 @@ ValidRegionDF = pd.DataFrame(RegionDF[ValidConnectionJ])
 
 NoConRegionDF = pd.DataFrame(RegionDF[NoConnection])
 
-print "assigning no connection score"
+print ("assigning no connection score")
 
 #overwrite connection score in no connection table
 NoConRegionDF['ConnectionScore'] = 6
@@ -458,10 +443,7 @@ del TrWait
 
 SubRegionDF = RegionDF.loc[:,['FromZone', 'ToZone', 'NumTransfers', 'TrWait', 'DistanceFlag', 'TimeFlag', 'TransferPoint', 'TWTPoint','ConnectionScore']]
 
-print "importing connection score table"
+print ("importing connection score table")
 
 #create Connection Score table in postgres
-engine = create_engine('postgresql://postgres:sergt@localhost:5432/rtsp')
-SubRegionDF.to_sql('ConnectionScore', engine, chunksize = 10000)
-
-'''
+SubRegionDF.to_sql('ConnectionScore', ENGINE, chunksize = 10000)
