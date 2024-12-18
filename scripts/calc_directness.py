@@ -44,7 +44,8 @@ def db_to_dictionary(TOD, tablename, dictname):
     q = f'Select "0" from "{table}";'
     cur.execute(q)
     rows = cur.fetchall()
-    dictname[TOD] = rows
+    values = [int(row[0]) for row in rows]
+    dictname[TOD] = values
 
 
 for tod in TODs:
@@ -57,6 +58,7 @@ for tod in TODs:
     db_to_dictionary(tod, "TransitVol", PuTvol)
     db_to_dictionary(tod, "TransferWait", TrWait)
 
+
 def volsum_to_dict(table, vols):
     q = f'Select "0", "1" from {table};'
     cur.execute(q)
@@ -65,12 +67,7 @@ def volsum_to_dict(table, vols):
 
 print('Sending volume sums to dictionary')
 volsum_to_dict("transit_vol_sum", TOD_VolSums)
-print(TOD_VolSums)
 volsum_to_dict("hwy_vol_sum", HWY_TOD_VolSums)
-print(HWY_TOD_VolSums)
-
-
-
 
 #calculate sum of transit volume
 TotTransitVol = 0
