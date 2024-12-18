@@ -29,13 +29,22 @@ TODs = ["AM", "MD", "PM", "NT"]
 # connect to DB (sqlalchemy)
 con = ENGINE.connect()
 
+cur = conn.cursor()
 
 #pull fromzone and tozone into lists to reference
-print('pull from zone numbers')
-FromZone = list(con.execute(text('Select "0" From "FromZone_AM";')))
-ToZone = list(con.execute(text('Select "0" From "ToZone_AM";')))
+print('pull zone numbers')
 
-cur = conn.cursor()
+q1 = 'Select "0" from "FromZone_AM";'
+q2 = 'Select "0" from "ToZone_AM";'
+
+cur.execute(q1)
+rows = cur.fetchall()
+FromZone = [int(row[0]) for row in rows]
+
+cur.execute(q2)
+rows = cur.fetchall()
+ToZone = [int(row[0]) for row in rows]
+
 
 #pull matrix values into dictionaries
 def db_to_dictionary(TOD, tablename, dictname):
